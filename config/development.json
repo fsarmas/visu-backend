@@ -1,0 +1,5 @@
+{
+    "name": "Developement Environment",
+    "database": "mongodb://localhost:27017/development",
+    "port": 3100
+}

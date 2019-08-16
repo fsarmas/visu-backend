@@ -1,0 +1,29 @@
+{
+  "name": "visu-web",
+  "version": "0.1.0",
+  "description": "Visual spaced repetition web app",
+  "private": true,
+  "main": "app.js",
+  "scripts": {
+    "local_db": "mongod --port 27017 --dbpath ../db",
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "NODE_ENV=test node_modules/.bin/mocha test/**/* --exit"
+  },
+  "author": "Fernando Sánchez de Armas",
+  "license": "",
+  "dependencies": {
+    "config": "^3.2.2",
+    "errorhandler": "^1.5.1",
+    "express": "^4.13.4",
+    "mongoose": "^5.6.9"
+  },
+  "devDependencies": {
+    "eslint": "^6.1.0",
+    "eslint-config-google": "^0.13.0",
+    "eslint-plugin-jsdoc": "^15.8.0",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0",
+    "supertest": "^4.0.2"
+  }
+}

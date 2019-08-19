@@ -23,6 +23,8 @@ module.exports = {
   'rules': {
     'arrow-parens': 0,
     'max-len': 1,
+    'spaced-comment': 1,
+    'padded-blocks': 1,
     'valid-jsdoc': 0, // deprecated, use eslint-plugin-jsdoc
     'require-jsdoc': 0, // deprecated, use eslint-plugin-jsdoc
     'jsdoc/require-jsdoc': ['warn', {

@@ -39,7 +39,7 @@ mongoose.connection.on('error', (err) => {
 });
 mongoose
     .connect(config.get('database'),
-        {useNewUrlParser: true, useCreateIndex: true})
+        {useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false})
     .then(() => { // Accepted
       app.listen(config.get('port'), (err) => {
         if (err) {

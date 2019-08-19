@@ -1,54 +1,103 @@
 const User = require('../../src/models/user');
-
-let nextId = 0;
-let users = [];
+const mongoose = require('mongoose');
 
 module.exports = {
-  // TODO: Replace all this functions with database queries
 
+  /**
+   * Gets all the users in database.
+   *
+   * @returns {!mongoose.Query<!Array<User>>} exec or then to get a promise
+   * which resolves to a (possibly empty) array containing all users stored in
+   * database
+   */
   list() {
-    return users;
+    return User.find();
   },
 
+  /**
+   * Gets the user matching the given ID from database.
+   *
+   * @param {string} id user ID to match
+   * @returns {!mongoose.Query<?User>} exec or then to get a promise which
+   * resolves to the user matching the given ID, or 'undefined' if no user is
+   * found
+   */
   findById(id) {
-    return users.find(e => e.id == id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return Promise.resolve(undefined);
+    }
+
+    return User.findById(id);
   },
 
+  /**
+   * Creates a user in database with the given fields.
+   *
+   * @param {!object} user contains the fields to create a User that is stored
+   * in database
+   * @returns {!Promise<!User>} resolves with the user saved.
+   */
   create(user) {
-    const error = new User(user).validateSync();
-    if (error) {
-      throw error;
-    }
-
-    const created = {id: ++nextId, name: user.name};
-    users.push(created);
-    return created;
+    const userDocument = new User(user);
+    return userDocument.save();
   },
 
-  update(user) {
-    const error = new User(user).validateSync();
-    if (error) {
-      throw error;
+  /**
+   * Updates the user in dabase with the given ID using the given replacement
+   * data. Email, password and internal database fields cannot be changed and
+   * are ignored if present in update object. Update keys whose value is
+   * undefined are removed from the object.
+   *
+   * @param {string} id Unique ID of the user to update
+   * @param {!object} update contains key-value pairs representing the user
+   * updates
+   * @returns {!mongoose.Query<!User>} exec or then to get a promise which
+   * resolves to the updated user.
+   */
+  update(id, update) {
+    const cleanUpdates = {};
+
+    for (const key in update) {
+      if (key.includes('$')) {
+        continue;
+      }
+      if (['_id', '__v', 'createdAt', 'updatedAt', 'email', 'password']
+          .includes(key)) {
+        continue;
+      }
+      cleanUpdates[key] = update[key];
     }
 
-    const index = users.findIndex(e => e.id == user.id);
-    if (-1 == index) {
-      throw new Error(`Update index ${user.id} invalid`);
-    }
-    users[index] = user;
-    return users[index];
+    return User.findOneAndUpdate(
+        {_id: id},
+        cleanUpdates,
+        {new: true, runValidators: true, omitUndefined: true},
+    );
   },
 
+  /**
+   * Deleted the user matching the given ID from database.
+   *
+   * @param   {string} id Unique ID of the user to delete
+   * @returns {!mongoose.Query<?User>} exec or then to get a promise which
+   * resolves to the deleted user, or undefined if not found.
+   * @throws {Error} If the given ID does not represent a valid ObjectId
+   */
   delete(id) {
-    const index = users.findIndex(e => e.id = id);
-    if (-1 == index) {
-      throw new Error(`Delete index ${id} invalid`);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error('invalid id: ' + id);
     }
-    users.splice(index, 1);
+    return User.findByIdAndRemove(id);
   },
 
+  /**
+   * Deletes all users from database.
+   *
+   * @returns {!mongoose.Query<undefined>} exec or then to get a promise which
+   * resolves when all users are deleted.
+   */
   deleteAll() {
-    users = [];
+    return User.deleteMany({});
   },
 
 };

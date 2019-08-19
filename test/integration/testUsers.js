@@ -7,17 +7,18 @@ const userController = require('../../src/controllers/userController');
 const User = require('../../src/models/user');
 
 const EXAMPLE_USERS = [
-  {name: 'Daenerys Targaryen'},
-  {name: 'Arya Stark'},
-  {name: 'Onion Knight'},
-  {name: 'Brienne of Tarth'},
+  {name: 'Daenerys Targaryen', email: 'danny@targaryen.com', password: '12345'},
+  {name: 'Arya Stark', email: 'arya@stark.com', password: '67890'},
+  {name: 'Onion Knight', email: 'davos@tor.org', password: 'abcde'},
+  {name: 'Brienne of Tarth', email: 'brienne@tarth.net', password: 'fghij'},
 ];
 
 /* Helper functions (validation) */
 
 function assertValidUser(user) {
   assert.isObject(user);
-  const userDoc = new User(user);
+  assert.notProperty(user, 'password');
+  const userDoc = new User(Object.assign({password: 'dummy'}, user));
   const error = userDoc.validateSync();
   if (error) {
     throw error;
@@ -25,7 +26,12 @@ function assertValidUser(user) {
 }
 
 function assertEqualUser(user1, user2) {
-  assert.strictEqual(user1.name, user2.name);
+  User.schema.eachPath(path => {
+    if (['_id', '__v', 'createdAt', 'updatedAt', 'password'].includes(path)) {
+      return;
+    }
+    assert.strictEqual(user1[path], user2[path]);
+  });
 }
 
 /* Helper functions (HTTP requests) */
@@ -62,9 +68,8 @@ function deleteUser(id) {
  */
 
 describe('User API tests', function() {
-  beforeEach('Delete all users', function(done) {
-    userController.deleteAll();
-    done();
+  beforeEach('Delete all users', function() {
+    return userController.deleteAll().exec();
   });
 
   it('GET users (empty)', function() {
@@ -79,16 +84,32 @@ describe('User API tests', function() {
                 assert.isArray(res.body);
                 assert.lengthOf(res.body, EXAMPLE_USERS.length);
                 res.body.forEach(e => assertValidUser(e));
-                assert.isNotOk(hasDuplicates(res.body.map(e => e.id)));
+                assert.isNotOk(hasDuplicates(res.body.map(e => e._id)));
               });
         });
   });
 
-  it('POST users (invalid)', function() {
+  it('POST users (invalid name)', function() {
     const user = Object.assign({}, EXAMPLE_USERS[0]);
     user.name = [1, 2, 3];
 
     return postUsers(user).expect(400);
+  });
+
+  it('POST users (invalid - missing email)', function() {
+    const user = Object.assign({}, EXAMPLE_USERS[0]);
+    delete user.email;
+
+    return postUsers(user).expect(400);
+  });
+
+  it('POST users (duplicated email)', function() {
+    const user1 = Object.assign({}, EXAMPLE_USERS[0]);
+    const user2 = Object.assign({}, EXAMPLE_USERS[1]);
+
+    postUsers(user1).expect(201).then(() => {
+      postUsers(user2).expect(409);
+    });
   });
 
   it('POST users (valid)', function() {
@@ -110,12 +131,12 @@ describe('User API tests', function() {
     return postUsers(EXAMPLE_USERS[0])
         .expect(res => created = res.body)
         .then(() => {
-          return getUser(created.id)
+          return getUser(created._id)
               .expect(200)
               .expect(res => {
                 assertValidUser(res.body);
                 assertEqualUser(res.body, EXAMPLE_USERS[0]);
-                assert.strictEqual(res.body.id, created.id);
+                assert.strictEqual(res.body._id, created._id);
               });
         });
   });
@@ -124,41 +145,61 @@ describe('User API tests', function() {
     return putUser(1, EXAMPLE_USERS[0]).expect(404);
   });
 
-  it('PUT a user (invalid)', function() {
+  it('PUT a user (invalid name)', function() {
     let created;
 
     return postUsers(EXAMPLE_USERS[0])
         .expect(res => created = res.body)
         .then(() => {
           created.name = [1, 2, 3];
-          return putUser(created.id, created).
-              expect(400);
+          return putUser(created._id, created).expect(400);
         });
   });
 
-  it('PUT a user (valid)', function() {
-    let createdId;
+  it('PUT a user (email & password do not change)', function() {
+    let id;
 
-    return postUsers(EXAMPLE_USERS[0])
-        .expect(res => createdId = res.body.id)
+    const user1 = Object.assign({}, EXAMPLE_USERS[0]);
+    const user2 = Object.assign({}, EXAMPLE_USERS[1]);
+
+    return postUsers(user1).expect(201).expect(res => {
+      id = res.body._id;
+    }).then(() => {
+      return putUser(id, user2).expect(200).expect(res => {
+        assertValidUser(res.body);
+        assert.strictEqual(res.body._id, id);
+        assert.strictEqual(res.body.name, user2.name);
+        assert.strictEqual(res.body.email, user1.email);
+      });
+    });
+  });
+
+  it('PUT a user (valid)', function() {
+    const original = Object.assign({}, EXAMPLE_USERS[0]);
+
+    return postUsers(original)
+        .expect(201)
+        .expect(res => original._id = res.body._id)
         .then(() => {
           // Modified object without ID
           const mod1 = Object.assign({}, EXAMPLE_USERS[1]);
 
           // Modified object with same ID
           const mod2 = Object.assign({}, EXAMPLE_USERS[2]);
-          mod2.id = createdId;
+          mod2.id = original._id;
 
           // Modified object with different ID
           const mod3 = Object.assign({}, EXAMPLE_USERS[3]);
           mod3.id = 1234;
 
           return Promise.all([mod1, mod2, mod3].map(modified => {
-            return putUser(createdId, modified)
+            return putUser(original._id, modified)
                 .expect(200)
                 .expect(res => {
-                  assertEqualUser(res.body, modified);
-                  assert.strictEqual(res.body.id, createdId);
+                  assertValidUser(res.body);
+                  assert.strictEqual(res.body._id, original._id);
+                  assert.strictEqual(res.body.email, original.email);
+                  assert.strictEqual(res.body.name, modified.name);
                 });
           }));
         });
@@ -173,7 +214,9 @@ describe('User API tests', function() {
 
     return postUsers(EXAMPLE_USERS[0])
         .expect(res => created = res.body)
-        .then(() => deleteUser(created.id).expect(204))
-        .then(() => getUser(created.id).expect(404));
+        .then(() => deleteUser(created._id).expect(200).expect(res => {
+          assertEqualUser(created, res.body);
+        }))
+        .then(() => getUser(created._id).expect(404));
   });
 });

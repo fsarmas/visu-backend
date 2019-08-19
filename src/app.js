@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const config = require('config');
-const errorHandler = require('errorhandler');
 
 const mainRouter = require('./routes/index');
 
@@ -12,18 +11,24 @@ app.use(mainRouter);
 /**
  * Add an error handler
  */
-if (config.get('name') === 'development') {
-  app.use(errorHandler());
-} else {
-  app.use((err, req, res, next) => {
-    if (err.status >= 500) {
-      console.error(err);
-    }
-    // TODO: Write error to log file
-    res.status(err.status || 500);
-    res.send(err.message || 'Server Error');
-  });
-}
+app.use((err, req, res, next) => {
+  // TODO: Improve error object in response
+
+  switch (err.name) {
+    case 'ValidationError':
+    case 'MongoError':
+    case 'CastError':
+      return res.status(400).send(err);
+  }
+
+  // Any other error
+  if (!err.status || err.status >= 500) {
+    console.error('error ->', err);
+  }
+
+  res.status(err.status || 500);
+  res.send(err.message || 'Server Error');
+});
 
 /**
  * Configure and connect to DB. If successful, start Express server

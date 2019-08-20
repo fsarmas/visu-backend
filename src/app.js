@@ -16,9 +16,13 @@ app.use((err, req, res, next) => {
 
   switch (err.name) {
     case 'ValidationError':
-    case 'MongoError':
     case 'CastError':
       return res.status(400).send(err);
+
+    case 'MongoError':
+      if (err.code == 11000) { // DUPLICATE_KEY error
+        return res.status(409).send(err);
+      }
   }
 
   // Any other error

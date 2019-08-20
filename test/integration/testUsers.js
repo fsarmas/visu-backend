@@ -105,10 +105,9 @@ describe('User API tests', function() {
 
   it('POST users (duplicated email)', function() {
     const user1 = Object.assign({}, EXAMPLE_USERS[0]);
-    const user2 = Object.assign({}, EXAMPLE_USERS[1]);
 
-    postUsers(user1).expect(201).then(() => {
-      postUsers(user2).expect(409);
+    return postUsers(user1).expect(201).then(() => {
+      return postUsers(user1).expect(409);
     });
   });
 

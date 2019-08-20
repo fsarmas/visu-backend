@@ -1,5 +1,6 @@
 {
     "name": "Production Environment",
     "database": "mongodb://localhost:27017/production",
-    "port": 3300
+    "port": 3300,
+    "saltingRounds": 12
 }

@@ -1,5 +1,6 @@
 {
     "name": "Developement Environment",
     "database": "mongodb://localhost:27017/development",
-    "port": 3100
+    "port": 3100,
+    "saltingRounds": 5
 }

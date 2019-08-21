@@ -44,8 +44,8 @@ module.exports = {
 
   /**
    * Updates the user in dabase with the given ID using the given replacement
-   * data. Email, password and internal database fields cannot be changed and
-   * are ignored if present in update object. Update keys whose value is
+   * data. Email, password, level and internal database fields cannot be changed
+   * and are ignored if present in update object. Update keys whose value is
    * undefined are removed from the object.
    *
    * @param {string} id Unique ID of the user to update
@@ -61,7 +61,7 @@ module.exports = {
       if (key.includes('$')) {
         continue;
       }
-      if (['_id', '__v', 'createdAt', 'updatedAt', 'email', 'password']
+      if (['_id', '__v', 'createdAt', 'updatedAt', 'email', 'password', 'level']
           .includes(key)) {
         continue;
       }
@@ -98,6 +98,21 @@ module.exports = {
    */
   deleteAll() {
     return User.deleteMany({});
+  },
+
+  /**
+   * Sets the 'level' of the given object in database to value 'admin'.
+   *
+   * @param   {string} id Unique ID of the user to update
+   * @returns {!mongoose.Query<!User>} exec or then to get a promise which
+   * resolves to the updated user.
+   */
+  makeAdmin(id) {
+    return User.findOneAndUpdate(
+        {_id: id},
+        {level: 'admin'},
+        {new: true, runValidators: true},
+    );
   },
 
 };

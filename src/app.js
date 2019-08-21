@@ -2,10 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const config = require('config');
 
+const auth = require('./auth.js');
 const mainRouter = require('./routes/index');
 
 const app = express();
 app.use(express.json());
+app.use(auth.initializePassport());
 app.use(mainRouter);
 
 /**

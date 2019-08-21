@@ -1,4 +1,6 @@
 const router = require('express').Router(); // eslint-disable-line new-cap
+
+const auth = require('../auth.js');
 const userController = require('../controllers/userController.js');
 
 function cleanup(user) {
@@ -20,6 +22,9 @@ router.param('id', (req, res, next, id) => {
     }
   }).catch(next);
 });
+
+// require admin authentication for all routes under this
+router.use(auth.authAdmin());
 
 router.route('/')
     .get((req, res, next) => {

@@ -80,6 +80,12 @@ function deleteUser(token, id) {
       .set(authHeader(token));
 }
 
+function getMe(token) {
+  return request(app)
+      .get('/me')
+      .set(authHeader(token));
+}
+
 /*
   Tests
  */
@@ -91,12 +97,17 @@ describe('User API tests', function() {
   beforeEach('Before each test', function() {
     return userController.deleteAll()
         .then(() => userController.create(ADMIN))
-        .then(created => userController.makeAdmin(created.id))
+        .then(created => {
+          ADMIN._id = created.id;
+          return userController.makeAdmin(created.id);
+        })
         .then(updated => tokenAdmin =
             auth.generateAccessToken(updated.id, '1d'))
         .then(() => userController.create(REGULAR))
-        .then(created => tokenRegular =
-            auth.generateAccessToken(created.id, '1d'));
+        .then(created => {
+          REGULAR._id = created.id;
+          tokenRegular = auth.generateAccessToken(created.id, '1d');
+        });
   });
 
   it('GET users (no auth)', function() {
@@ -282,5 +293,21 @@ describe('User API tests', function() {
               assertEqualUser(created, res.body);
             }))
         .then(() => getUser(tokenAdmin, created._id).expect(404));
+  });
+
+  it('/me (no auth)', function() {
+    return getMe(null).expect(401);
+  });
+
+  it('/me returns authenticated user', function() {
+    return getMe(tokenRegular).expect(200).expect(res => {
+      assert.strictEqual(REGULAR._id, res.body._id);
+      assertEqualUser(REGULAR, res.body);
+    }).then(() => {
+      getMe(tokenAdmin).expect(200).expect(res => {
+        assert.strictEqual(ADMIN._id, res.body._id);
+        assertEqualUser(ADMIN, res.body);
+      });
+    });
   });
 });

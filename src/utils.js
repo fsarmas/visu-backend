@@ -18,5 +18,19 @@ module.exports = {
     return a.length != set.size;
   },
 
+  /**
+   * Sanitizes the given user so that it is ready to be sent away. Password
+   * field is deleted. If the given user has a "toJSON" method, it is invoked
+   * first.
+   *
+   * @param {!object} user the user to sanitize
+   * @returns {!object} a copy of the given user without sentitive information
+   */
+  cleanUser: function(user) {
+    const result = user.toJSON ? user.toJSON() : {...user};
+    delete result.password;
+    return result;
+  },
+
 };
 

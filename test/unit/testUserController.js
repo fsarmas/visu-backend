@@ -12,7 +12,6 @@ describe('userController tests', function() {
       password: '12345', level: 'admin'};
 
     let saved = await userController.create(user);
-    console.log(saved);
     assert.isNotOk(saved.level);
 
     saved = await userController.makeAdmin(saved.id);

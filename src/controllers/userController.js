@@ -31,6 +31,22 @@ module.exports = {
   },
 
   /**
+   * Gets the user matching the given email from database.
+   *
+   * @param {string} email user email to match
+   * @returns {!mongoose.Query<?User>} exec or then to get a promise which
+   * resolves to the user matching the given email, or 'undefined' if no user is
+   * found
+   */
+  findByEmail(email) {
+    if (!email) {
+      throw new Error('email is required');
+    }
+
+    return User.findOne({email});
+  },
+
+  /**
    * Creates a user in database with the given fields.
    *
    * @param {!object} user contains the fields to create a User that is stored
@@ -103,7 +119,7 @@ module.exports = {
   /**
    * Sets the 'level' of the given object in database to value 'admin'.
    *
-   * @param   {string} id Unique ID of the user to update
+   * @param {string} id Unique ID of the user to update
    * @returns {!mongoose.Query<!User>} exec or then to get a promise which
    * resolves to the updated user.
    */
@@ -113,6 +129,18 @@ module.exports = {
         {level: 'admin'},
         {new: true, runValidators: true},
     );
+  },
+
+  /**
+   * Verifies that the given hash was generated from the given password.
+   *
+   * @param {string} password unencrypted password to verify
+   * @param {string} hash encrypted hash to match
+   * @returns {Promise} resolves to true if the hash matches the password;
+   * resolves to false otherwise
+   */
+  verifyPassword(password, hash) {
+    return User.verifyPassword(password, hash);
   },
 
 };

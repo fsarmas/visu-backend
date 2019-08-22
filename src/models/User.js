@@ -33,4 +33,16 @@ userSchema.pre('save', function(next) {
   });
 });
 
+/**
+ * Verifies that the given hash was generated from the given password.
+ *
+ * @param {string} password unencrypted password to verify
+ * @param {string} hash encrypted hash to match
+ * @returns {Promise} resolves to true if the hash matches the password;
+ * resolves to false otherwise
+ */
+userSchema.statics.verifyPassword = function(password, hash) {
+  return bcrypt.compare(password, hash);
+};
+
 module.exports = mongoose.model('User', userSchema);

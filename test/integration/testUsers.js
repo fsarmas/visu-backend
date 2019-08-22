@@ -5,7 +5,6 @@ const app = require('../../src/app.js');
 const hasDuplicates = require('../../src/utils.js').hasDuplicates;
 const userController = require('../../src/controllers/userController');
 const User = require('../../src/models/user');
-const auth = require('../../src/auth.js');
 
 const EXAMPLE_USERS = [
   {name: 'Daenerys Targaryen', email: 'danny@targaryen.com', password: '12345'},
@@ -86,6 +85,10 @@ function getMe(token) {
       .set(authHeader(token));
 }
 
+function login(email, password) {
+  return request(app).post('/auth/login').send({email, password});
+}
+
 /*
   Tests
  */
@@ -101,12 +104,19 @@ describe('User API tests', function() {
           ADMIN._id = created.id;
           return userController.makeAdmin(created.id);
         })
-        .then(updated => tokenAdmin =
-            auth.generateAccessToken(updated.id, '1d'))
+        .then(updated => login(ADMIN.email, ADMIN.password).expect(res => {
+          assert.isOk(res.body.auth);
+          assert.strictEqual(ADMIN._id, res.body.uid);
+          tokenAdmin = res.body.token;
+        }))
         .then(() => userController.create(REGULAR))
         .then(created => {
           REGULAR._id = created.id;
-          tokenRegular = auth.generateAccessToken(created.id, '1d');
+          return login(REGULAR.email, REGULAR.password).expect(res => {
+            assert.isOk(res.body.auth);
+            assert.strictEqual(REGULAR._id, res.body.uid);
+            tokenRegular = res.body.token;
+          });
         });
   });
 

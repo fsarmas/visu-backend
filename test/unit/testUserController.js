@@ -7,7 +7,7 @@ describe('userController tests', function() {
     return userController.deleteAll().exec();
   });
 
-  it('Save ignores level / promote sets it', async function() {
+  it('Save ignores level / makeAdmin sets it', async function() {
     const user = {name: 'Daenerys Targaryen', email: 'danny@targaryen.com',
       password: '12345', level: 'admin'};
 

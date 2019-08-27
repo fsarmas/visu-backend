@@ -262,11 +262,11 @@ describe('User API tests', function() {
 
           // Modified object with same ID
           const mod2 = Object.assign({}, EXAMPLE_USERS[2]);
-          mod2.id = original._id;
+          mod2._id = original._id;
 
           // Modified object with different ID
           const mod3 = Object.assign({}, EXAMPLE_USERS[3]);
-          mod3.id = 1234;
+          mod3._id = 1234;
 
           return Promise.all([mod1, mod2, mod3].map(modified => {
             return putUser(tokenAdmin, original._id, modified)

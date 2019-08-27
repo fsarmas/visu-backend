@@ -24,9 +24,8 @@ const REGULAR = {name: 'B', email: 'b@b.com', password: 'bbb'};
 async function createAdminUser() {
   let user = await userController.findById(ADMIN.email);
   if (!user) {
-    // eslint-disable-next-line require-atomic-updates
     user = await userController.create(ADMIN);
-    // eslint-disable-next-line require-atomic-updates
+    ADMIN._id = user._id; // eslint-disable-line require-atomic-updates
     user = await userController.makeAdmin(user.id);
   }
   assert.strictEqual(user.level, 'admin');
@@ -46,8 +45,8 @@ async function createAdminUser() {
 async function createRegularUser() {
   let user = await userController.findById(REGULAR.email);
   if (!user) {
-    // eslint-disable-next-line require-atomic-updates
     user = await userController.create(REGULAR);
+    REGULAR._id = user._id; // eslint-disable-line require-atomic-updates
   }
 
   const response = await login(REGULAR.email, REGULAR.password);

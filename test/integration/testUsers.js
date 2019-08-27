@@ -5,6 +5,8 @@ const app = require('../../src/app.js');
 const hasDuplicates = require('../../src/utils.js').hasDuplicates;
 const userController = require('../../src/controllers/userController');
 const User = require('../../src/models/user');
+const {createAdminUser, createRegularUser, authHeader, ADMIN, REGULAR}
+    = require('./authUtils.js');
 
 const EXAMPLE_USERS = [
   {name: 'Daenerys Targaryen', email: 'danny@targaryen.com', password: '12345'},
@@ -12,9 +14,6 @@ const EXAMPLE_USERS = [
   {name: 'Onion Knight', email: 'davos@tor.org', password: 'abcde'},
   {name: 'Brienne of Tarth', email: 'brienne@tarth.net', password: 'fghij'},
 ];
-
-const ADMIN = {name: 'A', email: 'a@a.com', password: 'aaa'};
-const REGULAR = {name: 'B', email: 'b@b.com', password: 'bbb'};
 
 /* Helper functions (validation) */
 
@@ -38,14 +37,6 @@ function assertEqualUser(user1, user2) {
 }
 
 /* Helper functions (HTTP requests) */
-
-function authHeader(token) {
-  if (!token) {
-    return {};
-  }
-
-  return {Authorization: `Bearer ${token}`};
-}
 
 function getUsers(token) {
   return request(app)
@@ -85,10 +76,6 @@ function getMe(token) {
       .set(authHeader(token));
 }
 
-function login(email, password) {
-  return request(app).post('/auth/login').send({email, password});
-}
-
 /*
   Tests
  */
@@ -97,27 +84,10 @@ describe('User API tests', function() {
   let tokenRegular;
   let tokenAdmin;
 
-  beforeEach('Before each test', function() {
-    return userController.deleteAll()
-        .then(() => userController.create(ADMIN))
-        .then(created => {
-          ADMIN._id = created.id;
-          return userController.makeAdmin(created.id);
-        })
-        .then(updated => login(ADMIN.email, ADMIN.password).expect(res => {
-          assert.isOk(res.body.auth);
-          assert.strictEqual(ADMIN._id, res.body.uid);
-          tokenAdmin = res.body.token;
-        }))
-        .then(() => userController.create(REGULAR))
-        .then(created => {
-          REGULAR._id = created.id;
-          return login(REGULAR.email, REGULAR.password).expect(res => {
-            assert.isOk(res.body.auth);
-            assert.strictEqual(REGULAR._id, res.body.uid);
-            tokenRegular = res.body.token;
-          });
-        });
+  beforeEach('Before each test', async function() {
+    await userController.deleteAll();
+    tokenRegular = await createRegularUser();
+    tokenAdmin = await createAdminUser();
   });
 
   it('GET users (no auth)', function() {
@@ -311,11 +281,11 @@ describe('User API tests', function() {
 
   it('/me returns authenticated user', function() {
     return getMe(tokenRegular).expect(200).expect(res => {
-      assert.strictEqual(REGULAR._id, res.body._id);
+      assert.strictEqual(REGULAR._id.toString(), res.body._id);
       assertEqualUser(REGULAR, res.body);
     }).then(() => {
       getMe(tokenAdmin).expect(200).expect(res => {
-        assert.strictEqual(ADMIN._id, res.body._id);
+        assert.strictEqual(ADMIN._id.toString(), res.body._id);
         assertEqualUser(ADMIN, res.body);
       });
     });

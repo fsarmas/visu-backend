@@ -22,7 +22,9 @@ router.use(auth.authAdmin());
 
 router.route('/')
     .get((req, res, next) => {
-      cardController.list(req.query.skip, req.query.limit)
+      const skip = parseInt(req.query.skip);
+      const limit = parseInt(req.query.limit);
+      cardController.list(skip, limit)
           .then(list => res.send(list))
           .catch(next);
     })

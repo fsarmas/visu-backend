@@ -3,15 +3,17 @@ const assert = require('chai').assert;
 
 const app = require('../../src/app.js');
 const hasDuplicates = require('../../src/utils.js').hasDuplicates;
+const cardController = require('../../src/controllers/cardController.js');
 const {EXAMPLES, assertEqCards} = require('../unit/testCardController.js');
 const {createAdminUser, createRegularUser, authHeader}
     = require('./authUtils.js');
 
 /* Helper functions (HTTP requests) */
 
-function getCards(token) {
+function getCards(token, skip, limit) {
   return request(app)
       .get('/cards')
+      .query({skip, limit})
       .set(authHeader(token));
 }
 
@@ -54,6 +56,10 @@ describe('Card API tests', function() {
     tokenAdmin = await createAdminUser();
   });
 
+  beforeEach('Before each test', async function() {
+    await cardController.deleteAll();
+  });
+
   it('GET cards (no auth)', function() {
     return getCards(undefined).expect(401);
   });
@@ -73,6 +79,41 @@ describe('Card API tests', function() {
                 assert.isNotOk(hasDuplicates(res.body.map(e => e._id)));
               });
         });
+  });
+
+  it('GET cards (skip & limit)', async function() {
+    for (const card of EXAMPLES) {
+      await postCards(tokenAdmin, card);
+    }
+
+    let all;
+    await getCards(tokenAdmin).expect(res => {
+      all = res.body;
+    });
+
+    await getCards(tokenAdmin, 0, 3).expect(200).expect(res => {
+      const result = res.body;
+      assert.lengthOf(result, 3);
+      for (let i = 0; i < 3; i++) {
+        assertEqCards(all[i], result[i]);
+      }
+    });
+
+    await getCards(tokenAdmin, 2, 2).expect(200).expect(res => {
+      const result = res.body;
+      assert.lengthOf(result, 2);
+      for (let i = 0; i < 2; i++) {
+        assertEqCards(all[i+2], result[i]);
+      }
+    });
+
+    await getCards(tokenAdmin, 4, 4).expect(200).expect(res => {
+      const result = res.body;
+      assert.lengthOf(result, 2);
+      for (let i = 0; i < 2; i++) {
+        assertEqCards(all[i+4], result[i]);
+      }
+    });
   });
 
   it('POST cards (no auth)', function() {

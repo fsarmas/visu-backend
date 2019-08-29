@@ -22,7 +22,7 @@ const REGULAR = {name: 'B', email: 'b@b.com', password: 'bbb'};
  * @returns {Promise<string>} fulfills with an access token for ADMIN user
  */
 async function createAdminUser() {
-  let user = await userController.findById(ADMIN.email);
+  let user = await userController.findByEmail(ADMIN.email);
   if (!user) {
     user = await userController.create(ADMIN);
     ADMIN._id = user._id; // eslint-disable-line require-atomic-updates
@@ -43,7 +43,7 @@ async function createAdminUser() {
  * @returns {Promise<string>} fulfills with an access token for REGULAR user
  */
 async function createRegularUser() {
-  let user = await userController.findById(REGULAR.email);
+  let user = await userController.findByEmail(REGULAR.email);
   if (!user) {
     user = await userController.create(REGULAR);
     REGULAR._id = user._id; // eslint-disable-line require-atomic-updates

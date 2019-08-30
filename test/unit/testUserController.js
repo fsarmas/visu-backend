@@ -14,10 +14,10 @@ describe('userController tests', function() {
     let saved = await userController.create(user);
     assert.isNotOk(saved.level);
 
-    saved = await userController.makeAdmin(saved.id);
+    saved = await userController.makeAdmin(saved._id);
     assert.strictEqual(saved.level, 'admin');
 
-    saved = await userController.findById(saved.id);
+    saved = await userController.findById(saved._id);
     assert.strictEqual(saved.level, 'admin');
   });
 });

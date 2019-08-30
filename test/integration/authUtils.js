@@ -26,7 +26,7 @@ async function createAdminUser() {
   if (!user) {
     user = await userController.create(ADMIN);
     ADMIN._id = user._id; // eslint-disable-line require-atomic-updates
-    user = await userController.makeAdmin(user.id);
+    user = await userController.makeAdmin(user._id);
   }
   assert.strictEqual(user.level, 'admin');
 

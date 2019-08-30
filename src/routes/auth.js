@@ -24,8 +24,8 @@ router.post('/login', (req, res, next) => {
     if (!valid) {
       throw new Error('__auth_error__');
     }
-    const token = auth.generateAccessToken(user.id);
-    res.status(200).send({auth: true, uid: user.id, token});
+    const token = auth.generateAccessToken(user._id);
+    res.status(200).send({auth: true, uid: user._id, token});
   }).catch(error => {
     console.log('caught ->', error);
     if (error.message === '__auth_error__') {

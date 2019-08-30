@@ -4,5 +4,6 @@ router.use('/users', require('./users.js'));
 router.use('/me', require('./me.js'));
 router.use('/auth', require('./auth.js'));
 router.use('/cards', require('./cards.js'));
+router.use('/collections', require('./collections.js'));
 
 module.exports = router;

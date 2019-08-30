@@ -8,6 +8,14 @@ module.exports = (MyModel) => {
   return {
 
     /**
+     * Fill this array with the properties that can't be updated by using the
+     * update method.
+     *
+     * @type {Array}
+     */
+    nonUpdatable: [],
+
+    /**
      * Gets a subset of all the elements stored in database.
      *
      * @param {number} skip if provided, skip this amount of elements before the
@@ -79,8 +87,11 @@ module.exports = (MyModel) => {
         throw error;
       }
 
+      const ommit = ['_id', '__v', 'createdAt', 'updatedAt',
+        ...this.nonUpdatable];
+
       for (const key in update) {
-        if (MyModel.schema.path(key)) { // TODO: Avoid updating ID
+        if (!ommit.includes(key) && MyModel.schema.path(key)) {
           found[key] = update[key];
         }
       }

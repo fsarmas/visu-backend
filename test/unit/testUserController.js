@@ -4,7 +4,7 @@ const userController = require('../../src/controllers/userController');
 
 describe('userController tests', function() {
   beforeEach('Delete all users', function() {
-    return userController.deleteAll().exec();
+    return userController.deleteAll();
   });
 
   it('Save ignores level / makeAdmin sets it', async function() {

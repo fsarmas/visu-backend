@@ -2,6 +2,7 @@ const router = require('express').Router(); // eslint-disable-line new-cap
 
 const auth = require('../auth.js');
 const collectionController = require('../controllers/collectionController.js');
+const cardController = require('../controllers/cardController.js');
 
 // Retieve collection if necessary, or fail with 404 if not existing
 router.param('id', (req, res, next, id) => {
@@ -48,6 +49,26 @@ router.route('/:id')
       collectionController.delete(req.collection._id).then((deleted) => {
         res.send(deleted);
       }).catch(next);
+    });
+
+router.get('/:id/cards', (req, res, next) => {
+  collectionController.getCardsInCollection(req.collection._id).then(cards => {
+    res.send(cards);
+  }).catch(next);
+});
+
+router.route('/:id/cards/:cardId')
+    .post((req, res, next) => {
+      cardController.addToCollection(req.params.cardId, req.collection._id)
+          .then(added => {
+            res.send(added);
+          }).catch(next);
+    })
+    .delete((req, res, next) => {
+      cardController.removeFromCollection(req.params.cardId, req.collection._id)
+          .then(removed => {
+            res.send(removed);
+          }).catch(next);
     });
 
 module.exports = router;

@@ -6,6 +6,7 @@ const cardSchema = new mongoose.Schema({
   name: {type: String, required: true},
   image: Array, // TODO: Mak array of Image
   data: Object,
+  collections: [{type: mongoose.Schema.Types.ObjectId, ref: 'Collection'}],
 
 }, {timestamps: true});
 

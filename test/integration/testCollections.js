@@ -3,10 +3,9 @@ const assert = require('chai').assert;
 
 const app = require('../../src/app.js');
 const hasDuplicates = require('../../src/utils.js').hasDuplicates;
-const collectionController =
-    require('../../src/controllers/collectionController.js');
-const {createAdminUser, createRegularUser, authHeader}
-    = require('./authUtils.js');
+const collectionController = require('../../src/controllers/collectionController.js'); // eslint-disable-line max-len
+const {createAdminUser, createRegularUser, authHeader} = require('./authUtils.js'); // eslint-disable-line max-len
+const {EXAMPLES: EXAMPLE_CARDS} = require('../unit/testCardController.js');
 
 const EXAMPLES = [
   {name: 'Iberian animals'},
@@ -61,6 +60,25 @@ function deleteCollection(token, id) {
   return request(app)
       .delete(`/collections/${id}`)
       .set(authHeader(token));
+}
+
+function getCardsInCollection(token, collectionId) {
+  return request(app)
+      .get(`/collections/${collectionId}/cards`)
+      .set(authHeader(token));
+}
+
+function addCardToCollection(token, cardId, collectionId) {
+  return request(app)
+      .post(`/collections/${collectionId}/cards/${cardId}`)
+      .set(authHeader(token));
+}
+
+function postCards(token, card) {
+  return request(app)
+      .post('/cards')
+      .set(authHeader(token))
+      .send(card);
 }
 
 /*
@@ -267,5 +285,44 @@ describe('Collection API tests', function() {
               assertEqCollections(created, res.body);
             }))
         .then(() => getCollection(tokenAdmin, created._id).expect(404));
+  });
+
+  it('Add/Remove cards to a collection', async function() {
+    let collection;
+    let card0;
+    let card1;
+
+    await postCollections(tokenAdmin, EXAMPLES[0]).then(res => {
+      collection = res.body;
+    });
+    await postCards(tokenAdmin, EXAMPLE_CARDS[0]).then(res => {
+      card0 = res.body;
+    });
+    await postCards(tokenAdmin, EXAMPLE_CARDS[1]).then(res => {
+      card1 = res.body;
+    });
+
+    await addCardToCollection(tokenAdmin, card0._id, collection._id)
+        .expect(200);
+
+    await addCardToCollection(tokenAdmin, card1._id, collection._id)
+        .expect(200);
+
+    await getCardsInCollection(tokenAdmin, collection._id)
+        .expect(200)
+        .expect(res => {
+          assert.lengthOf(res.body, 2);
+        });
+
+    let created;
+    await postCollections(tokenAdmin, EXAMPLES[0])
+        .then(res => created = res.body);
+
+    return getCollection(tokenAdmin, created._id)
+        .expect(200)
+        .expect(res => {
+          assertEqCollections(res.body, EXAMPLES[0]);
+          assert.strictEqual(res.body._id, created._id);
+        });
   });
 });

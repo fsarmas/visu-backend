@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const assert = require('chai').assert;
 
 const cardController = require('../../src/controllers/cardController.js');
+const collectionController = require('../../src/controllers/collectionController.js'); // eslint-disable-line max-len
 
 const EXAMPLES = [
   {kind: 'animal', name: 'Apodemus sylvaticus'},
@@ -107,6 +108,67 @@ describe('cardController tests', function() {
     const result3 = await cardController.list();
     assert.deepEqual(result3, []);
   });
+
+  it('adds cards to collections, get cards in collection', async function() {
+    const col1 = await collectionController.create({name: 'MyCollection 1'});
+    const col2 = await collectionController.create({name: 'MyCollection 2'});
+
+    const card1 = await cardController.create(EXAMPLES[0]);
+    const card2 = await cardController.create(EXAMPLES[1]);
+
+    await cardController.addToCollection(card1._id, col1._id);
+    await cardController.addToCollection(card1._id, col2._id);
+    await cardController.addToCollection(card2._id, col1._id);
+
+    let found = await cardController.findById(card1._id);
+    assert.lengthOf(found.collections, 2);
+    assert.deepInclude(found.collections, col1._id);
+    assert.deepInclude(found.collections, col2._id);
+
+    found = await cardController.findById(card2._id);
+    assert.lengthOf(found.collections, 1);
+    assert.deepInclude(found.collections, col1._id);
+
+    found = await collectionController.getCardsInCollection(col1._id);
+    assert.lengthOf(found, 2);
+    assert.deepInclude(found.map(e => e._id), card1._id);
+    assert.deepInclude(found.map(e => e._id), card2._id);
+
+    found = await collectionController.getCardsInCollection(col2._id);
+    assert.lengthOf(found, 1);
+    assert.deepInclude(found.map(e => e._id), card1._id);
+  });
+});
+
+it('removes cards from collection', async function() {
+  const col = await collectionController.create({name: 'MyCollection 1'});
+
+  const card0 = await cardController.create(EXAMPLES[0]);
+  const card1 = await cardController.create(EXAMPLES[1]);
+  const card2 = await cardController.create(EXAMPLES[2]);
+
+  await cardController.addToCollection(card0._id, col._id);
+  await cardController.addToCollection(card1._id, col._id);
+  await cardController.addToCollection(card2._id, col._id);
+
+  let cards = await collectionController.getCardsInCollection(col._id);
+  assert.lengthOf(cards, 3);
+
+  let result = await cardController.removeFromCollection(card1._id, col._id);
+  assert.isOk(result);
+  cards = await collectionController.getCardsInCollection(col._id);
+  assert.lengthOf(cards, 2);
+
+  result = await cardController.removeFromCollection(card1._id, col._id);
+  assert.isNotOk(result);
+  cards = await collectionController.getCardsInCollection(col._id);
+  assert.lengthOf(cards, 2);
+
+  result = await cardController.removeFromCollection(card0._id, col._id);
+  assert.isOk(result);
+  cards = await collectionController.getCardsInCollection(col._id);
+  assert.lengthOf(cards, 1);
+  assertEqCards(cards[0], EXAMPLES[2]);
 });
 
 module.exports.EXAMPLES = EXAMPLES;

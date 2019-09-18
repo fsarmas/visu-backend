@@ -19,21 +19,26 @@ app.use((err, req, res, next) => {
   switch (err.name) {
     case 'ValidationError':
     case 'CastError':
-      return res.status(400).send(err);
+    case 'TypeError':
+      err.status = 400;
+      break;
 
     case 'MongoError':
       if (err.code == 11000) { // DUPLICATE_KEY error
-        return res.status(409).send(err);
+        err.status = 409;
       }
   }
 
-  // Any other error
+  // Log error
   if (!err.status || err.status >= 500) {
     console.error('error ->', err);
   }
 
+  // Make sure error message is serialized
+  Object.defineProperty(err, 'message', {enumerable: true});
+
   res.status(err.status || 500);
-  res.send(err.message || 'Server Error');
+  res.send(err || 'Server Error');
 });
 
 /**

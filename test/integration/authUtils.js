@@ -46,8 +46,8 @@ async function createRegularUser() {
   let user = await userController.findByEmail(REGULAR.email);
   if (!user) {
     user = await userController.create(REGULAR);
-    REGULAR._id = user._id; // eslint-disable-line require-atomic-updates
   }
+  REGULAR._id = user._id; // eslint-disable-line require-atomic-updates
 
   const response = await login(REGULAR.email, REGULAR.password);
   assert.isOk(response.body.auth);

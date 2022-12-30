@@ -28,7 +28,7 @@
     "eslint": "^6.3.0",
     "eslint-config-google": "^0.13.0",
     "eslint-plugin-jsdoc": "^15.9.1",
-    "mocha": "^6.2.0",
+    "mocha": "^10.2.0",
     "supertest": "^4.0.2"
   }
 }
